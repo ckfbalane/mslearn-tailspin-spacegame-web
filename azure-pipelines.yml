@@ -45,12 +45,26 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
+# Fix: Ensure .NET tools manifest exists
+- script: |
+    if [ ! -f "$(Build.SourcesDirectory)/.config/dotnet-tools.json" ]; then
+      echo "No .NET tool manifest found. Creating one..."
+      dotnet new tool-manifest --force
+    fi
+  displayName: 'Ensure .NET Tool Manifest Exists'
+  workingDirectory: '$(Build.SourcesDirectory)'
+
+# Fix: Clear .NET tool cache to prevent conflicts
+- script: 'rm -rf ~/.nuget/packages ~/.dotnet/tools'
+  displayName: 'Clear .NET Tool Cache'
+
 - task: DotNetCoreCLI@2
   displayName: 'Install .NET tools from local manifest'
   inputs:
     command: custom
     custom: tool
     arguments: 'restore'
+    workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
@@ -66,6 +80,7 @@ steps:
     command: custom
     custom: tool
     arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+    workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage report'
