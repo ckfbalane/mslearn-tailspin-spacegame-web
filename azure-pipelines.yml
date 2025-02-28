@@ -13,11 +13,9 @@ variables:
 
 steps:
 - task: UseDotNet@2
-  displayName: 'Install .NET 6 SDK'
+  displayName: 'Use .NET SDK $(dotnetSdkVersion)'
   inputs:
-    packageType: 'sdk'
     version: '$(dotnetSdkVersion)'
-    installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: Npm@1
   displayName: 'Run npm install'
@@ -48,12 +46,11 @@ steps:
     projects: '**/*.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Install .NET tools from manifest'
+  displayName: 'Install .NET tools from local manifest'
   inputs:
     command: custom
     custom: tool
     arguments: 'restore'
-    workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
@@ -64,11 +61,11 @@ steps:
     projects: '**/*.Tests.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Create code coverage report'
-  inputs:
-    command: custom
-    custom: tool
-    arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+    displayName: 'Create code coverage report'
+    inputs:
+      command: custom
+      custom: tool
+      arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/Coverage/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage report'
