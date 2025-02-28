@@ -48,10 +48,18 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
-# Install ReportGenerator in a Local Directory
+# 🔹 Ensure NuGet is properly configured
+- task: NuGetCommand@2
+  displayName: 'Restore NuGet Packages'
+  inputs:
+    command: 'restore'
+    feedsToUse: 'select'
+
+# 🔹 Install ReportGenerator via NuGet (Alternative Approach)
 - script: |
-    dotnet tool install reportgenerator --tool-path $(toolInstallDir) --version 5.1.21
-  displayName: 'Install ReportGenerator Locally'
+    dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.2.0
+  displayName: 'Install ReportGenerator'
+  condition: always()
 
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
@@ -61,7 +69,8 @@ steps:
     publishTestResults: true
     projects: '**/*.Tests.csproj'
 
-- script: '$(toolInstallDir)/reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+# 🔹 Ensure report generation runs successfully
+- script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
   displayName: 'Generate Code Coverage Report'
 
 - task: PublishCodeCoverageResults@1
