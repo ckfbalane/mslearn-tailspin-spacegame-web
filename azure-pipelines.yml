@@ -10,6 +10,7 @@ variables:
   buildConfiguration: 'Release'
   wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
   dotnetSdkVersion: '6.x'
+  toolInstallDir: '$(Build.SourcesDirectory)/.tools'
 
 steps:
 - task: UseDotNet@2
@@ -47,9 +48,10 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
-# Install ReportGenerator as a Global Tool
-- script: 'dotnet tool install -g reportgenerator'
-  displayName: 'Install ReportGenerator as Global Tool'
+# Install ReportGenerator in a Local Directory
+- script: |
+    dotnet tool install reportgenerator --tool-path $(toolInstallDir) --version 5.1.21
+  displayName: 'Install ReportGenerator Locally'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
@@ -59,7 +61,7 @@ steps:
     publishTestResults: true
     projects: '**/*.Tests.csproj'
 
-- script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+- script: '$(toolInstallDir)/reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
   displayName: 'Generate Code Coverage Report'
 
 - task: PublishCodeCoverageResults@1
