@@ -15,7 +15,9 @@ steps:
 - task: UseDotNet@2
   displayName: 'Use .NET SDK $(dotnetSdkVersion)'
   inputs:
+    packageType: 'sdk'
     version: '$(dotnetSdkVersion)'
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
 - task: Npm@1
   displayName: 'Run npm install'
@@ -45,12 +47,9 @@ steps:
     arguments: '--no-restore --configuration $(buildConfiguration)'
     projects: '**/*.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Install .NET tools from local manifest'
-  inputs:
-    command: custom
-    custom: tool
-    arguments: 'restore'
+# Install ReportGenerator as a Global Tool
+- script: 'dotnet tool install -g reportgenerator'
+  displayName: 'Install ReportGenerator as Global Tool'
 
 - task: DotNetCoreCLI@2
   displayName: 'Run unit tests - $(buildConfiguration)'
@@ -60,12 +59,8 @@ steps:
     publishTestResults: true
     projects: '**/*.Tests.csproj'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Create code coverage report'
-  inputs:
-      command: custom
-      custom: tool
-      arguments: 'run reportgenerator -reports:$(Build.SourcesDirectory)/TestResults/Coverage/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+- script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines'
+  displayName: 'Generate Code Coverage Report'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage report'
