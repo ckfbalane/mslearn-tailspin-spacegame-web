@@ -61,7 +61,7 @@ steps:
     projects: '**/*.Tests.csproj'
 
 - task: DotNetCoreCLI@2
-  displayName: 'Create code coverage report'
+  displayName: 'Create code coverage reports'
   inputs:
     command: custom
     custom: tool
